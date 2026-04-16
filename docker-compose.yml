@@ -2,8 +2,9 @@ version: '3.8'
 
 services:
   postgres:
-    image: postgres:16-alpine
+    build: .
     container_name: audit_db
+    command: postgres -c shared_preload_libraries='pg_cron,pg_partman_bgw' -c cron.database_name='audit_logs_db' -c pg_partman_bgw.interval=3600 -c pg_partman_bgw.role=root -c pg_partman_bgw.dbname='audit_logs_db'
     environment:
       POSTGRES_USER: root
       POSTGRES_PASSWORD: password
