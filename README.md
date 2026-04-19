@@ -118,3 +118,25 @@ I intentionally planted a few "security flaws" in the Go codebase to test the ac
 1. **SQL Injection (CWE-89)**: It found a critical vulnerability where raw input was being injected directly into an `ALTER TABLE %s` formatting query. The AI instructed me how to correctly wrap PostgreSQL identifiers with double quotes and fix the DDL syntax order.
 2. **Missing Input Validation**: It noticed I was trusting raw strings for formatted dates. It recommended robust Regex validation at the usecase layer to prevent users from executing a purge command on malformed partition names.
 3. **Data Integrity Mismatch (jsonb)**: This review prevented severe runtime panics. My database schema utilized native `jsonb`, but the Go struct used a raw string format. If non-JSON text successfully hit the database driver, the app would crash. I solved this by adding `json.Valid()` checks right at the Gin API boundary.
+
+---
+
+## The Next Step: Partitioning vs. Sharding
+
+While this project is a showcasing PostgreSQL Declarative Partitioning, it is important to understand how it differs from Sharding and how they can be combined for massive scale.
+
+- **Partitioning (What I did)**: Data is divided into smaller chunks (like monthly tables) but remains on a **single physical server**. This solves the issue of bloated indexes and slow deletions perfectly.
+- **Sharding**: Data is distributed across **multiple physical servers** (e.g., using extensions like Citus). This solves the issue of a single machine not having enough CPU, RAM, or Disk Space to handle extreme global traffic.
+
+### Application-Level vs. Database-Level Sharding
+
+If I were to implement Sharding, I could do it at two levels:
+
+1. **Application-Level**: I would maintain multiple database connections in my Go code and use `if/else` logic to route data based on criteria (like a Country ID). This makes the application logic highly complex.
+2. **Database-Level (Citus)**: I would install an extension like Citus on the PostgreSQL cluster. My Go application would remain exactly as it is—connecting to only one Coordinator Node. Under the hood, the Coordinator magically analyzes the "Sharding Key" and routes the payload over the network to the correct Worker Node.
+
+### The End-Game Architecture: Sharding + Partitioning
+
+Can partitioning and sharding be used together? Absolutely. It is the ultimate architecture for enterprise-level time-series data (often called Distributed Time-Series).
+
+In a distributed environment, my Go application sends an insert request to the Coordinator Node. The Coordinator checks the Sharding Key (e.g., Country) and throws the data across the network to the correct physical Server Worker. Once the data arrives at that worker, its local PostgreSQL engine checks the Partition Key (e.g., Date) and instantly routes it into a highly-optimized, monthly partition bucket. This provides infinite computing scale alongside lightning-fast disk I/O and instant data purging capacities.
