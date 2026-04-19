@@ -35,12 +35,12 @@ func (u *auditUsecase) TrackAction(ctx context.Context, userID string, action st
 }
 
 func (u *auditUsecase) ForcePurgeOldData(ctx context.Context, targetMonth string) error {
-	monthRegex := regexp.MustCompile(`^\d{4}_\d{2}$`)
+	monthRegex := regexp.MustCompile(`^\d{6}$`)
 	if !monthRegex.MatchString(targetMonth) {
-		return errors.New("invalid targetMonth format. expected YYYY_MM")
+		return errors.New("invalid targetMonth format. expected YYYYMM (e.g., 202601)")
 	}
 
-	partitionName := fmt.Sprintf("audit_logs_p%s", targetMonth)
+	partitionName := fmt.Sprintf("audit_logs_p%s01", targetMonth)
 
 	return u.repo.ManualPurgePartition(ctx, partitionName)
 }

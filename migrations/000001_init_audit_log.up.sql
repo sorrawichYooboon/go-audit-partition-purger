@@ -18,8 +18,7 @@ CREATE INDEX idx_audit_logs_created_at ON audit_logs(created_at);
 SELECT partman.create_parent(
     p_parent_table := 'public.audit_logs',
     p_control := 'created_at',
-    p_type := 'native',
-    p_interval := 'monthly',
+    p_interval := '1 month',
     p_premake := 3 
 );
 

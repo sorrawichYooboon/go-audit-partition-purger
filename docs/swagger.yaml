@@ -1,0 +1,62 @@
+basePath: /
+definitions:
+  dto.CreateAuditLogRequest:
+    properties:
+      action:
+        example: LOGIN_SUCCESS
+        type: string
+      details:
+        example: '{"ip":"192.168.1.1"}'
+        type: string
+      user_id:
+        example: USR-001
+        type: string
+    required:
+    - action
+    - details
+    - user_id
+    type: object
+host: localhost:8080
+info:
+  contact: {}
+  description: API for testing Audit Log insertions into partitioned DB.
+  title: Go Audit Partition Purger API
+  version: "1.0"
+paths:
+  /api/v1/audit-logs:
+    post:
+      consumes:
+      - application/json
+      description: Stores audit log into partitioned table via pg_partman
+      parameters:
+      - description: Audit Log Data
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.CreateAuditLogRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Create a new audit log
+      tags:
+      - audit
+swagger: "2.0"
